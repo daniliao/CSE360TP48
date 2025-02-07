@@ -1,18 +1,13 @@
 package application;
 
-import java.security.SecureRandom;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
-
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import databasePart1.*;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
-import databasePart1.*;
-
+import javafx.animation.Timeline;
+import javafx.util.Duration;
+import javafx.animation.KeyFrame;
 
 
 
@@ -22,13 +17,17 @@ import databasePart1.*;
  * This page displays a simple welcome message for the admin.
  */
 
+
+
 public class AdminHomePage {
 	/**
      * Displays the admin page in the provided primary stage.
      * @param primaryStage The primary stage where the scene will be displayed.
      */
 	
-    public void show(DatabaseHelper database, Stage primaryStage) {
+	private static final int TIME_EXPIRE = 20; // Code expires in 20 seconds
+	
+    public void show(DatabaseHelper databaseHelper, Stage primaryStage) {
     	
     	// Main Layout
     	BorderPane mainLayout = new BorderPane();	
@@ -57,7 +56,7 @@ public class AdminHomePage {
 
         // User Management Tab
         Tab userManagementTab = new Tab("User Management");
-        userManagementTab.setContent(createUserManagementPane(database));
+        userManagementTab.setContent(createUserManagementPane());
         userManagementTab.setClosable(false);
 
 
@@ -68,12 +67,10 @@ public class AdminHomePage {
 
         // Inv-Users Tab
         Tab inviteUsersTab = new Tab("Invite Users");
-        inviteUsersTab.setContent(createInvitePane());
+        inviteUsersTab.setContent(createInvitePane(databaseHelper));
         inviteUsersTab.setClosable(false);
 
-        //Temp Password Logic 
 
-        
         // Temp-Password Tab
         Tab createPasswordTab = new Tab("Temporary Password");
         createPasswordTab.setContent(createPasswordPane());
@@ -81,7 +78,6 @@ public class AdminHomePage {
 
 
         // Add tabs to the tab pane
-        
         tabPane.getTabs().addAll(userManagementTab, rolesTab, inviteUsersTab, createPasswordTab);
         mainLayout.setCenter(tabPane);
 
@@ -97,10 +93,9 @@ public class AdminHomePage {
 
 
 
-    private Pane createUserManagementPane(DatabaseHelper database) {
+    private Pane createUserManagementPane() {
         VBox userManagementPane = new VBox(10);
         userManagementPane.setStyle("-fx-padding: 10;");
-
 
 
         //this is how buttons are made, and how you can add labels to those buttons
@@ -109,35 +104,20 @@ public class AdminHomePage {
         Button deleteUserButton = new Button("Delete User");
         ListView<String> userList = new ListView<>();           //really nice way to list the users in a list of variable '<>' size
         userList.getItems().addAll("User 1", "User 2", "User 3");   //testing purposes: .getItems() returns a list and adds 3 users.
-        ListView<String> userList1 = fetchUserList(database);
-
 
         // Add functionality to buttons
         addUserButton.setOnAction(e -> {
             userList.getItems().add("New User");    //this code should change to invite new user rather than add
         });
-        
-        //add delete user functionality
-        
 
         /*deleteUserButton is an event handler that defines what happens when
         * deleteUserButton is clicked. It uses that 'e -> {...}' expression to
         * handle that event. Same concept applies to addUserButton
         */
         deleteUserButton.setOnAction(e -> {
-            String selectedItem = userList1.getSelectionModel().getSelectedItem();
-            if (selectedItem != null) {
-                String username = selectedItem.substring( //creates a substring of the username from the userlist ListView
-                    selectedItem.indexOf(":") + 2, 
-                    selectedItem.indexOf("|") - 1  
-                ).trim(); //removes the spaces from the ends of the string
-                
-                try {
-                    database.deleteUser(username);
-                    userList1.getItems().remove(selectedItem);
-                } catch (SQLException ex) {
-                    ex.printStackTrace();
-                }
+            String selectedUser = userList.getSelectionModel().getSelectedItem();   //deletes the user that is currently selected
+            if (selectedUser != null) {             //if a user is selected, it will go through the getItems
+                userList.getItems().remove(selectedUser);   //.getItems returns a list, in this case the userlist, and selects the selectedUser
             }
         });
 
@@ -146,7 +126,7 @@ public class AdminHomePage {
         * getChildren() essentially accesses these elements, and AddAll() put them together in a 
         * vertical stack (that's why its called Vbox, it organizes stuff vertically)
         */ 
-        userManagementPane.getChildren().addAll(userLabel, addUserButton, deleteUserButton, userList,userList1);
+        userManagementPane.getChildren().addAll(userLabel, addUserButton, deleteUserButton, userList);
         return userManagementPane;
     }
 
@@ -164,67 +144,75 @@ public class AdminHomePage {
 
 
 
-    private Pane createInvitePane() {
+    private Pane createInvitePane(DatabaseHelper databaseHelper) {
+        
         VBox invitePane = new VBox(10);
         invitePane.setStyle("-fx-padding: 10;");
 
+        
+        // Label to display the title of the page
+        Label userLabel = new Label("Invite ");
+        //userLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+        
+        // Button to generate the invitation code
+        Button showCodeButton = new Button("Generate Invitation Code");
+        
+        // Label to display the generated invitation code
+        Label inviteCodeLabel = new Label(""); ;
+        inviteCodeLabel.setStyle("-fx-font-size: 14px; -fx-font-style: italic;");
+        
+        // Label to display the timer
+        Label myTimer = new Label("");
+        myTimer.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        
+        showCodeButton.setOnAction(a -> {
+            // Generate the invitation code using the databaseHelper and set it to the label
+            String invitationCode = databaseHelper.generateInvitationCode();
+            inviteCodeLabel.setText(invitationCode);
 
-        //ADD FUNCTION HERE
+            // Start the countdown timer
+            startCountdown(myTimer);
+        });
+        
+
+        invitePane.getChildren().addAll(userLabel, showCodeButton, inviteCodeLabel, myTimer);
+
 
         return invitePane;
     }
-    
-    
-    private ListView<String> fetchUserList(DatabaseHelper database) {
-        ListView<String> userList = new ListView<>();
-        ObservableList<String> items = FXCollections.observableArrayList();
-        
-        try {
-            ResultSet rs = database.getAllUsers();
-            while (rs.next()) {
-                String userName = rs.getString("userName");
-                String role = rs.getString("role");
-                items.add(String.format("Username: %s | Role: %s", userName, role));
+
+    private void startCountdown(Label myTimer) {
+        // Set the initial time remaining
+        int[] timeRemaining = {TIME_EXPIRE};
+
+        // Create a Timeline to update the timer every second
+        Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
+            timeRemaining[0]--;
+
+            if (timeRemaining[0] >= 0) {
+                // Update the timer label
+                myTimer.setText("Code expires in: " + timeRemaining[0] + " seconds");
+            } 
+            else {
+                // Stop the timer and indicate the code has expired
+                myTimer.setText("Code expired!");
+                ((Timeline) event.getSource()).stop();
             }
-            userList.setItems(items);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        
-        return userList;
-    
+        }));
 
-    // Then in createUserManagementPane:
-
+        // Set the timeline to run indefinitely until stopped
+        timeline.setCycleCount(Timeline.INDEFINITE);
+        timeline.play();
+    }
 
 
 
     private Pane createPasswordPane() {
         VBox passwordPane = new VBox(10);
-        passwordPane.setStyle("-fx-padding: 90;");
+        passwordPane.setStyle("-fx-padding: 10;");
 
 
-	     Label temp = new Label("");
-	      temp.setStyle("-fx-font-size: 14px; -fx-font-style: italic;");
-	    
-	    Button genTempPass = new Button("Generate Temporary Password");
-	    genTempPass.setOnAction(a -> {
-	        SecureRandom random = new SecureRandom();
-	        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789~`!@#$%^&*()_-+={}[]|\\:;\"'<>,.?/";
-	        StringBuilder tempPass = new StringBuilder();
-	        
-	        tempPass.append("Bb0-"); // check all tests
-	        
-	        for (int i = 4; i < 8; i++) {
-	            tempPass.append(chars.charAt(random.nextInt(chars.length())));
-	        }
-	        
-	        temp.setText(tempPass.toString());
-
-	        
-	        	    });
-	    passwordPane.getChildren().addAll(genTempPass,temp);
-       
+        //ADD FUNCTION HERE
 
         return passwordPane;
     }
