@@ -5,7 +5,10 @@ import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
 
 import databasePart1.*;
 
@@ -17,6 +20,7 @@ public class AdminSetupPage {
 	
     private final DatabaseHelper databaseHelper;
     private final boolean isFirstUser;
+	private TextInputControl errorLabel;
     
     public AdminSetupPage(DatabaseHelper databaseHelper, boolean isFirstUser) {
         this.databaseHelper = databaseHelper;
@@ -36,27 +40,45 @@ public class AdminSetupPage {
 
         Button setupButton = new Button("Setup");
         
+     // Assuming errorLabel is already defined in your UI and other required components are set up properly
+
         setupButton.setOnAction(a -> {
-        	// Retrieve user input
+            // Retrieve user input
             String userName = userNameField.getText();
             String password = passwordField.getText();
+            
             try {
-            	// Create a new User object with admin role and register in the database
-            	User user=new User(userName, password, "admin");
-                databaseHelper.register(user);
-                System.out.println("Administrator setup completed.");
-                
-                if (isFirstUser) {
-                	new UserLoginPage(databaseHelper).show(primaryStage);
+                // Check if the user already exists
+                if (!databaseHelper.doesUserExist(userName)) {
+                    
+                    // Create a new user with admin role (assuming User constructor can handle ArrayList<String>)
+                    ArrayList<String> adminRole = new ArrayList<>(Collections.singletonList("admin"));
+                    User user = new User(userName, password, adminRole); // Assuming User constructor takes ArrayList<String> for roles
+                    
+                    // Register the new user in the database
+                    databaseHelper.register(user);
+                    System.out.println("Administrator setup completed.");
+                    
+                    boolean isFirstUser = databaseHelper.isDatabaseEmpty();  // Check if the database is empty, assuming this method is implemented
+                    
+                    if (isFirstUser) {
+                        new UserLoginPage(databaseHelper).show(primaryStage);  // Show User Login Page for the first user
+                    } else {
+                        // Navigate to the Welcome Login Page for other users
+                        new WelcomeLoginPage(databaseHelper).show(primaryStage, user);
+                    }
+                    
                 } else {
-                // Navigate to the Welcome Login Page
-                new WelcomeLoginPage(databaseHelper).show(primaryStage,user);
+                    errorLabel.setText("This userName is taken! Please use another to set up an account.");
                 }
-             } catch (SQLException e) {
+            } catch (SQLException e) {
                 System.err.println("Database error: " + e.getMessage());
                 e.printStackTrace();
+                errorLabel.setText("Database error: " + e.getMessage());  // Display the error in the error label
             }
         });
+
+
 
         VBox layout = new VBox(10, userNameField, passwordField, setupButton);
         layout.setStyle("-fx-padding: 20; -fx-alignment: center;");

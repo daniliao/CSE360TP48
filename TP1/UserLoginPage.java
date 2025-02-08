@@ -6,6 +6,9 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import databasePart1.*;
 
@@ -43,33 +46,32 @@ public class UserLoginPage {
             String userName = userNameField.getText();
             String password = passwordField.getText();
             try {
-            	databaseHelper.connectToDatabase();
-            	User user=new User(userName, password, "");
-            	WelcomeLoginPage welcomeLoginPage = new WelcomeLoginPage(databaseHelper);
-            	
-            	// Retrieve the user's role from the database using userName
-            	String role = databaseHelper.getUserRole(userName);
-            	
-            	if(role!=null) {
-            		user.setRole(role);
-            		if(databaseHelper.login(user)) {
-            			welcomeLoginPage.show(primaryStage,user);
-            		}
-            		else {
-            			// Display an error if the login fails
-                        errorLabel.setText("Error logging in");
-            		}
-            	}
-            	else {
-            		// Display an error if the account does not exist
-                    errorLabel.setText("user account doesn't exists");
-            	}
-            	
-            } catch (SQLException e) {
-                System.err.println("Database error: " + e.getMessage());
-                e.printStackTrace();
-            } 
-        });
+            	 List<String> roleList = databaseHelper.getUserRoles(userName);
+
+                 if (roleList != null && !roleList.isEmpty()) {
+                     // Convert List<String> to ArrayList<String>
+                     ArrayList<String> roles = new ArrayList<>(roleList);
+
+                     // Create the user object with the retrieved role
+                     User user = new User(userName, password, roles);
+
+                     if (databaseHelper.login(user)) {
+                         // Navigate to WelcomeLoginPage upon successful login
+                         WelcomeLoginPage welcomeLoginPage = new WelcomeLoginPage(databaseHelper);
+                         welcomeLoginPage.show(primaryStage, user);
+                     } else {
+                         // Display an error if the login fails
+                         errorLabel.setText("Error logging in");
+                     }
+                 } else {
+                     // Display an error if the account does not exist
+                     errorLabel.setText("User account doesn't exist");
+                 }
+             } catch (SQLException e) {
+                 System.err.println("Database error: " + e.getMessage());
+                 e.printStackTrace();
+             }
+         });
 
         VBox layout = new VBox(10);
         layout.setStyle("-fx-padding: 20; -fx-alignment: center;");
