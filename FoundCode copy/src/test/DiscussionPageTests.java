@@ -55,11 +55,6 @@ import org.junit.Test;
  * {@link DiscussionPageViewModel} class.
  * </p>
  * 
- * <p> Copyright: Daniel Liao © 2025 </p>
-	 * 
-	 * @author Daniel Liao
-	 * 
-	 * @version 0.00		2025-03-14	Initial baseline 
  */
 
 public class DiscussionPageTests {
@@ -81,6 +76,26 @@ public class DiscussionPageTests {
 		assertFalse(vm.getQuestionInList().isEmpty());
 		assertEquals("Life?", vm.getQuestionInList().get(0).getQuestionFromUser());
 
+	}
+	
+	
+	/**********
+	 * This method tests the update functionality of an existing question.
+     * 
+     * Only difference it that it will test with an inputed empty text 
+     * 
+     * 
+	 */
+	@Test
+	public void testCreateOrUpdateQuestion_withEmptyText() {
+	    DiscussionPageViewModel vm = new DiscussionPageViewModel();
+
+	    // Attempt to create a new question with empty text
+	    vm.createOrUpdateQuestion("", true, null);
+
+	    // Verify that a question with empty text has been added
+	    assertFalse(vm.getQuestionInList().isEmpty());
+	    assertEquals("", vm.getQuestionInList().get(0).getQuestionFromUser());
 	}
 
 	/**********
@@ -147,6 +162,25 @@ public class DiscussionPageTests {
 
 		assertEquals("is life", vm.getQuestionAndAnswer().get(question).get(0).getAnswerFromUser());
 	}
+	
+	/**********
+	 * This method tests the update functionality of an existing answer.
+     * 
+     * Only difference it that it will test with an inputed empty text 
+     * 
+     * 
+	 */
+	@Test
+	public void testCreateOrUpdateAnswer_withEmptyText() {
+	    DiscussionPageViewModel vm = new DiscussionPageViewModel();
+	    vm.createOrUpdateQuestion("Sample question", true, null);
+	    Question question = vm.getQuestionInList().get(0);
+	    int initialSize = vm.getQuestionAndAnswer().get(question).size();
+	    vm.createOrUpdateAnswer("", true, question, null);
+	    int newSize = vm.getQuestionAndAnswer().get(question).size();
+	    assertEquals("Answer list should remain unchanged for empty input", initialSize, newSize);
+	}
+
 
 	/**********
 	 * This method test the update functionality of an existing answer.
@@ -220,6 +254,19 @@ public class DiscussionPageTests {
 		vm.deleteQuestion(question);
 
 		assertFalse(vm.getQuestionInList().contains(question));
+	}
+	
+	
+	/**********
+	 * This method test the deletion of a question with null reference.
+     * 
+     * It verifies that there is no error when trying to delete a null reference.
+     * 
+	 */
+	@Test
+    public void testDeleteQuestionWithNullReference() {
+        DiscussionPageViewModel vm = new DiscussionPageViewModel();
+        vm.deleteQuestion(null);
 	}
 	
 	/**********
@@ -310,6 +357,28 @@ public class DiscussionPageTests {
 
 		assertFalse(ans.getReply().contains(replllly));
 	}
+	
+
+	/**********
+	 * This method tests deleting a reply with null reference.
+	 * 
+	 * It's a way to make sure that errors are handled correctly when
+	 * deleting a nested reply.
+     * 
+	 */
+	
+	@Test
+	public void testDeleteReplyWithNullReference() {
+	    DiscussionPageViewModel vm = new DiscussionPageViewModel();
+	    vm.createOrUpdateQuestion("Sample question", true, null);
+	    Question question = vm.getQuestionInList().get(0);
+	    try {
+	        vm.deleteAnswer(question, null);
+	    } catch (IllegalArgumentException e) {
+	    }
+	}
+
+	
 
 	/**********
 	 * This method tests marking question as solved
@@ -328,6 +397,26 @@ public class DiscussionPageTests {
 
 		assertEquals("Question (solved): quesss", question.toString());
 		assertTrue("marked as solved", question.isSolved());
+	}
+	
+	/**********
+	 * This method tests marking question as solved that is already solved
+	 * 
+	 * Purpose of this test is to decrement errors
+     * 
+	 */
+	@Test
+	public void testMarkAlreadySolvedQuestion() {
+	    // Arrange
+	    DiscussionPageViewModel vm = new DiscussionPageViewModel();
+	    vm.createOrUpdateQuestion("Life?", true, null);
+	    Question question = vm.getQuestionInList().get(0);
+	    vm.solvedQuestion(question); // First time marking as solved
+
+	    vm.solvedQuestion(question); // Attempting to mark as solved again
+
+	    assertEquals("Question (solved): Life?", question.toString());
+	    assertTrue(question.isSolved());
 	}
 
 	/**********
