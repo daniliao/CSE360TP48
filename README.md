@@ -10,15 +10,12 @@ DANIEL YI-CHIAN LIAO
 
 ## Team project 
 
-![Demo!](https://github.com/link)
+![Demo!](https://youtu.be/RiezNdxdx7c)
 
 ### Video explains the code: 
 
-https://youtu.be/link
+https://youtu.be/bPVFIQ_VqjA
 
-### Video on how each requirement is satisfied: 
-
-https://youtu.be/link
 
 ### 1.  Students to establish and maintain a list of trusted reviewers.
 ```java
@@ -108,12 +105,8 @@ https://youtu.be/link
 
 ```
 
-### .
-```java
 
-```
-
-## New files from team project 1 to team project 2
+## New files from team project 2 to team project 3
 
 ```
 View
