@@ -17,96 +17,58 @@ https://youtu.be/RiezNdxdx7c
 https://youtu.be/bPVFIQ_VqjA
 
 
-### 1.  Students to establish and maintain a list of trusted reviewers.
-```java
-    // UI: Add checkbox to mark answer as trusted
-    CheckBox trustedBox = new CheckBox("Trusted Reviewer?");
-
-    // In addAnswerButton:
-    int trusted = trustedBox.isSelected() ? 1 : 0;
-    Answer answer = new Answer(answerTextBox.getText(), trusted);
-    viewModel.getQuestionAndAnswer().get(selectedQuestion).add(answer);
-
-```
-
+## 1.  As a staff member, I want to view questions and their answers so I can monitor student interactions.
 
 ```java
-// 
-    // In Answer.java
-    private int trusted; // 1 = trusted, 0 = not trusted
 
-    public int getTrusted() { return trusted; }
-    public void setTrusted(int trusted) { this.trusted = trusted; }
+// Question list populated from the ViewModel
+ListView<Question> questionList = new ListView<>(viewModel.getQuestionInList());
 
-    @Override
-    public String toString() {
-    String trustLabel = trusted == 1 ? " (by trusted)" : "";
-    return "Answer: " + answerFromInput + trustLabel + " | Weight: " + weight;
-}
+// Text area to display selected question's answers and replies
+TextArea answerBox = new TextArea();
+answerBox.setEditable(false);
+
+
 
 ```
 
 
 
+
+
+### 2. As a staff member, I want to view nested replies to answers so I can track discussions in detail.
+
 ```java
-// Filter trusted answers
-    showTrustedAnswersButton.setOnAction(e -> {
-    TreeItem<Answer> root = new TreeItem<>();
-    for (Answer a : viewModel.getQuestionAndAnswer().get(selected)) {
-        if (a.getTrusted() == 1) {
-            TreeItem<Answer> answerItem = new TreeItem<>(a);
-            root.getChildren().add(answerItem);
+
+//  when a question is selected, display its answers and replies
+questionList.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, selectedQuestion) -> {
+    if (selectedQuestion != null) {
+        // Retrieve answers for the selected question
+        List<Answer> answers = viewModel.getQuestionAndAnswer().get(selectedQuestion);
+        StringBuilder text = new StringBuilder();
+
+        // Append each answer and its nested replies to the text output
+        for (Answer a : answers) {
+            text.append("Answer: ").append(a.getAnswerFromUser()).append("\n");
+            for (Answer reply : a.getReply()) {
+                text.append("   Reply: ").append(reply.getAnswerFromUser()).append("\n");
+            }
         }
+
+        // Display answers and replies in the answer viewer
+        answerBox.setText(text.toString());
     }
-    answerTreeView.setRoot(root);
-    });
+});
+
 
 ```
 
 
 
-### 2. Students to add a weightage value to each reviewer 
-
-```java
-    // In Answer.java
-    private int weight = 0;
-
-    public int getWeight() { return weight; }
-    public void upvote() { weight++; }
-
-```
 
 
 
-```java
-
- // In DiscussionPageView.java
-    Button upvoteButton = new Button("?? Upvote");
-
-    upvoteButton.setOnAction(e -> {
-    Answer selected = getSelectedAnswer();
-    if (selected != null) {
-        selected.upvote();
-        updateTreeView(questionInListView.getSelectionModel().getSelectedItem());
-    }
-    });
-
-```
-
-
-```java
-// 
-    // Sort trusted answers by weight
-    List<Answer> sortedTrustedAnswers = new ArrayList<>();
-    for (Answer a : viewModel.getQuestionAndAnswer().get(selected)) {
-        if (a.getTrusted() == 1) sortedTrustedAnswers.add(a);
-    }
-    sortedTrustedAnswers.sort((a1, a2) -> Integer.compare(a2.getWeight(), a1.getWeight()));
-
-```
-
-
-## New files from team project 2 to team project 3
+## New files from team project 3 to team project 4
 
 ```
 View
