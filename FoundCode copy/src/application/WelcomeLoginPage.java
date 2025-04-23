@@ -9,6 +9,10 @@ import javafx.stage.Stage;
 import javafx.application.Platform;
 import java.util.Arrays;
 import java.util.List; // For mock roles
+
+import application.model.Answer;
+import application.model.Question;
+import application.viewModel.DiscussionPageViewModel;
 import databasePart1.*;
 
 /**
@@ -35,7 +39,7 @@ public class WelcomeLoginPage {
         //List<String> roles = databaseHelper.getUserRoles(user.getUserName());
         
         // Fake multiple roles for testing
-        List<String> roles = Arrays.asList("admin", "user", "reviewer", "instructor"); // Fake multiple roles
+        List<String> roles = Arrays.asList("admin", "user", "reviewer", "instructor", "staff"); // Fake multiple roles
         
         // Create ComboBox and add roles
         ComboBox<String> roleSelector = new ComboBox<>();
@@ -72,10 +76,25 @@ public class WelcomeLoginPage {
                     //new InstructorHomePage().show(primaryStage);
                     break;
                 case "staff":
-                    //new StaffHomePage().show(primaryStage);
+                	
+                	//Demo///////////////////////////////////////////////////////
+                	DiscussionPageViewModel vm = new DiscussionPageViewModel();
+
+                    Question q1 = new Question("How do I submit my assignment?");
+                    Answer a1 = new Answer("Click 'Submit' on Canvas.", 1);
+                    Answer a2 = new Answer("Ask your TA for help.", 0);
+                    a2.createReply(new Answer("Thanks, that helped!", 0));
+
+                    vm.getQuestionInList().add(q1);
+                    vm.getQuestionAndAnswer().put(q1, List.of(a1, a2));
+
+                    new StaffHomePage(vm).show(primaryStage); // ✅ Just this!
+                	/////////////////////////////////////////////////////////////////////////
+                	
                     break;
                 case "reviewer":
                     //new ReviewerHomePage().show(primaryStage);
+                    new application.View.ReviewerMessagingPage(user.getUserName()).show(primaryStage);
                     break;
                 default:
                     System.out.println("Unknown Role");

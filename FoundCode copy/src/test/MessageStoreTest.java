@@ -1,4 +1,6 @@
-package application.model;
+package test;
+
+import application.model.Answer;
 
 import application.model.Message;
 import application.model.MessageStore;
