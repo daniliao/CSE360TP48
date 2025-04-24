@@ -8,9 +8,6 @@ Ricardo Guerrero,
 Cristian Holguin, 
 DANIEL YI-CHIAN LIAO
 
-## Team project Demo
-
-https://youtu.be/RiezNdxdx7c
 
 ### Video explains the code: 
 
